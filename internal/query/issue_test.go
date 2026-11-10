@@ -447,3 +447,40 @@ func TestIssueGet(t *testing.T) {
 		})
 	}
 }
+
+func TestGetPaginateParams(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name      string
+		input     string
+		wantFrom  uint
+		wantLimit uint
+		wantErr   bool
+	}{
+		{name: "empty uses default", input: "", wantFrom: 0, wantLimit: defaultLimit},
+		{name: "limit only", input: "50", wantFrom: 0, wantLimit: 50},
+		{name: "from and limit", input: "10:20", wantFrom: 10, wantLimit: 20},
+		{name: "above cloud cap", input: "0:500", wantFrom: 0, wantLimit: 500},
+		{name: "max limit", input: "0:1000", wantFrom: 0, wantLimit: maxLimit},
+		{name: "over max limit", input: "0:1001", wantErr: true},
+		{name: "zero limit", input: "0:0", wantErr: true},
+		{name: "negative from", input: "-1:10", wantErr: true},
+		{name: "not a number", input: "a:b", wantErr: true},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			from, limit, err := getPaginateParams(tc.input)
+			if tc.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			assert.NoError(t, err)
+			assert.Equal(t, tc.wantFrom, from)
+			assert.Equal(t, tc.wantLimit, limit)
+		})
+	}
+}

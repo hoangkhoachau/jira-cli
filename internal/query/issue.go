@@ -17,7 +17,13 @@ type Issue struct {
 	params *IssueParams
 }
 
-const defaultLimit = 100
+const (
+	defaultLimit = 100
+	// maxLimit is the largest page size accepted by --paginate. Jira Cloud caps
+	// search results at 100 per request, but Jira Data Center/Server allows up to
+	// 1000 by default; the server applies its own cap either way.
+	maxLimit = 1000
+)
 
 // NewIssue creates and initializes a new Issue type.
 func NewIssue(project string, flags FlagParser) (*Issue, error) {
@@ -328,7 +334,7 @@ func getPaginateParams(paginate string) (uint, uint, error) {
 		)
 		errOutOfBounds = fmt.Errorf(
 			"invalid argument for paginate: Format <from>:<limit>, where <from> is optional and "+
-				"<limit> must be between %d and %d (inclusive)", 1, defaultLimit,
+				"<limit> must be between %d and %d (inclusive)", 1, maxLimit,
 		)
 	)
 
@@ -363,7 +369,7 @@ func getPaginateParams(paginate string) (uint, uint, error) {
 	if from < 0 || limit <= 0 {
 		return 0, 0, errOutOfBounds
 	}
-	if limit > defaultLimit {
+	if limit > maxLimit {
 		return 0, 0, errOutOfBounds
 	}
 
